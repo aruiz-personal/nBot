@@ -2,8 +2,6 @@
 #_*_ coding: utf8 _*_
 
 import PyPDF2
-# pdf file object
-# you can find find the pdf file with complete code in below
 
 def convertir(ruta):
     pdfFileObj = open(ruta, 'rb')
