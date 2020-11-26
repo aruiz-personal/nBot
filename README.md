@@ -1,5 +1,5 @@
 # nBot
-Draft de nbto
+Draft de nbot
 
 ![alt text](https://github.com/aruiz-personal/nBot/blob/main/screenshots/arquitectura.png)
 # Docker
