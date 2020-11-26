@@ -9,7 +9,6 @@ text = ""
 INPUT_PDF, INPUT_PDF_C = range(2)
 GRUPO = "YOUR GROUP OR CHAT ID"
 
-""" Funciones """
 def start(update, context):
     if(update.message.chat.id!=GRUPO): return
     logger.info('He recibido un comando start')
@@ -98,7 +97,6 @@ def updateIoc(update, context):
     return INPUT_TEXT_C
     
 
-""" Main del Programa """
 if __name__ == '__main__':
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
