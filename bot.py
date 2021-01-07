@@ -1,4 +1,5 @@
-from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, ConversationHandler,CallbackQueryHandler,MessageHandler, Filters
+from telegram import InlineKeyboardMarkup,InlineKeyboardButton
 import yaml, logging, os
 import extract
 import pdf_to_text
@@ -7,19 +8,19 @@ import telegram
 INPUT_TEXT,INPUT_TEXT_C = range(2) 
 text = ""
 INPUT_PDF, INPUT_PDF_C = range(2)
-GRUPO = "YOUR GROUP OR CHAT ID"
+GRUPO = ACA_PONES_TU_CHAT_ID
 
 def start(update, context):
     if(update.message.chat.id!=GRUPO): return
     logger.info('He recibido un comando start')
     update.message.reply_text('¡Bienvenido a nBot %s!. Opciones disponibles: \
     \n/ioc - Cargar indicadores modo texto. \
-    \n/pdf - Cargar indicadores pdf. \
+    \n/pdf - Cargar indicadores pdf [Beta]. \
     \n' % update.message.from_user.name)
 
 def ioc(update, context):   
     if(update.message.chat.id!=GRUPO): return 
-    update.message.reply_text('Bueno %s, pasame el mensaje asi lo parseo!' % update.message.from_user.name)
+    update.message.reply_text('Bueno %s, pasame el mensaje asi lo parseo (acordate de anteponer \'/ioc\' al texto)!' % update.message.from_user.name)
     return INPUT_TEXT
 
 def pdf(update, context):  
@@ -80,6 +81,7 @@ def confirmar_ioc(update,context):
         #update.message.reply_text('%s, confirmado, se cargaron!' % update.message.from_user.name)
         update.message.reply_text('%s, confirmado, se cargaron los IoC' % update.message.from_user.name)
     if(update.message.text=="/no"):
+        print()
         update.message.reply_text('%s, se anulo la carga!' % update.message.from_user.name)
     text=""
     return ConversationHandler.END
@@ -89,12 +91,38 @@ def updateIoc(update, context):
     global text  
     text = update.message.text 
     if(extract.buscar(text) != ""):
-        update.message.reply_text('Se recibieron los IoC, procederé a cargar en nuestras soluciones lo siguiente:\n%s\n ¿Confirmar? /si - /no' % extract.buscar(text))
+        buttonSI = InlineKeyboardButton (
+            text='SI',
+            callback_data='SI'
+        )
+        buttonNO = InlineKeyboardButton (
+            text='NO',
+            callback_data='NO'
+        )
+        update.message.reply_text('Se recibieron los IoC, procederé a cargar en nuestras soluciones lo siguiente:\n%s\n ¿Confirmar?' % extract.buscar(text),reply_markup=InlineKeyboardMarkup([
+            [buttonSI,buttonNO]
+        ]))
+        
     else:
         update.message.reply_text('No encuentro IoC válidos en tu mensaje %s. Recordá que solo acepto SHA1, IPs públicas y dominios' % update.message.from_user.name)
         return ConversationHandler.END
 
     return INPUT_TEXT_C
+    
+def confirmar_ioc_button(update,context):
+    if(update.callback_query.message.chat.id!=GRUPO): return
+    
+    global text
+    print(update)
+    if(update.callback_query.data=='SI'):
+        extract.extraer(text)
+        update.callback_query.message.reply_text('%s, confirmado, se cargaron!' %update.callback_query.message.chat.first_name)
+               
+    if(update.callback_query.data=='NO'):
+        update.callback_query.message.reply_text('%s, se anulo la carga!' % update.callback_query.message.chat.first_name)
+        
+    text=""
+    return ConversationHandler.END
     
 
 if __name__ == '__main__':
@@ -103,7 +131,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('nAutomaticBot')
     
     """ Llave API para conectarse a Telegram """
-    updater = Updater(token="YOUR BOTS TOKEN", use_context=True)
+    updater = Updater(token="YOUR_BOT_TOKEN", use_context=True)
 
     dp = updater.dispatcher
 
@@ -115,7 +143,7 @@ if __name__ == '__main__':
         ],
         states={
             INPUT_TEXT: [MessageHandler(Filters.text, updateIoc)],
-            INPUT_TEXT_C: [MessageHandler(Filters.command, confirmar_ioc)]
+            INPUT_TEXT_C: [CallbackQueryHandler(callback=confirmar_ioc_button)]
         },
         fallbacks=[]
     ))
